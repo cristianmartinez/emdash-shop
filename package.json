@@ -1,0 +1,13 @@
+{
+	"name": "emdash-shop",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "pnpm --filter demo dev",
+		"build": "pnpm --filter demo build",
+		"seed": "pnpm --filter demo seed",
+		"typecheck": "pnpm -r typecheck",
+		"bootstrap": "pnpm --filter demo bootstrap",
+		"preview": "pnpm --filter demo preview"
+	}
+}

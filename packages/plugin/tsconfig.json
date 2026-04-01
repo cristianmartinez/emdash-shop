@@ -1,0 +1,17 @@
+{
+	"compilerOptions": {
+		"target": "es2022",
+		"module": "es2022",
+		"moduleResolution": "bundler",
+		"declaration": true,
+		"declarationMap": true,
+		"jsx": "react-jsx",
+		"lib": ["es2022", "DOM", "DOM.Iterable"],
+		"strict": true,
+		"skipLibCheck": true,
+		"outDir": "./dist",
+		"rootDir": "./src"
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist", "src/astro", "src/admin.tsx"]
+}

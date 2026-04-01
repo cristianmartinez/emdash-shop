@@ -1,0 +1,98 @@
+---
+import { getEmDashCollection } from "emdash";
+import { Image } from "emdash/ui";
+import Base from "../../layouts/Base.astro";
+
+const { entries: products, cacheHint } = await getEmDashCollection("products", {
+	orderBy: { created_at: "desc" },
+});
+Astro.cache.set(cacheHint);
+
+function formatPrice(cents: number, currency: string = "USD"): string {
+	return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(cents / 100);
+}
+---
+
+<Base title="Shop">
+	<div class="mb-8">
+		<h1 class="text-4xl font-bold tracking-tight">Shop</h1>
+		<p class="mt-2 text-gray-500">Browse our collection</p>
+	</div>
+
+	{products.length === 0 ? (
+		<div class="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
+			<p class="text-gray-500">No products yet.</p>
+			<a href="/_emdash/admin/content/products/new" class="mt-2 inline-block text-sm font-medium text-blue-600 hover:underline">Create one in the admin</a>
+		</div>
+	) : (
+		<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+			{products.map((product) => (
+				<div class="group overflow-hidden rounded-lg border border-gray-200 transition hover:shadow-lg">
+					<a href={`/shop/${product.id}`} class="block">
+						{product.data.featured_image ? (
+							<div class="aspect-square overflow-hidden bg-gray-100">
+								<Image image={product.data.featured_image} class="h-full w-full object-cover transition group-hover:scale-105" />
+							</div>
+						) : (
+							<div class="flex aspect-square items-center justify-center bg-gray-100 text-gray-400">
+								<svg class="h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+							</div>
+						)}
+					</a>
+					<div class="p-4">
+						<a href={`/shop/${product.id}`} class="block">
+							<h2 class="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{product.data.title}</h2>
+							{product.data.description && (
+								<p class="mt-1 line-clamp-2 text-sm text-gray-500">{product.data.description}</p>
+							)}
+						</a>
+						<div class="mt-3 flex items-center justify-between">
+							<div class="flex items-center gap-2">
+								<span class="text-lg font-bold">
+									{formatPrice(product.data.price, product.data.currency || "USD")}
+								</span>
+								{product.data.compare_at_price && product.data.compare_at_price > product.data.price && (
+									<span class="text-sm text-gray-400 line-through">
+										{formatPrice(product.data.compare_at_price, product.data.currency || "USD")}
+									</span>
+								)}
+							</div>
+							<button
+								data-add-to-cart={product.data.id}
+								class="add-to-cart-btn flex items-center gap-1.5 rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-700 active:scale-95"
+							>
+								<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" /></svg>
+								Add
+							</button>
+						</div>
+					</div>
+				</div>
+			))}
+		</div>
+	)}
+</Base>
+
+<script>
+	import { addToCart } from "@emdash-cms/plugin-commerce/client";
+
+	document.querySelectorAll<HTMLButtonElement>("[data-add-to-cart]").forEach((btn) => {
+		btn.addEventListener("click", async (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			const productId = btn.dataset.addToCart!;
+			const original = btn.innerHTML;
+
+			try {
+				await addToCart(productId);
+				btn.innerHTML = `<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Added!`;
+				btn.classList.replace("bg-gray-900", "bg-green-600");
+				setTimeout(() => {
+					btn.innerHTML = original;
+					btn.classList.replace("bg-green-600", "bg-gray-900");
+				}, 1500);
+			} catch (err) {
+				console.error("Failed to add to cart:", err);
+			}
+		});
+	});
+</script>

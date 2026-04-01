@@ -1,0 +1,89 @@
+---
+import { getEmDashEntry, getEntryTerms, getSeoMeta } from "emdash";
+import { Image, PortableText } from "emdash/ui";
+import Base from "../../layouts/Base.astro";
+
+const { slug } = Astro.params;
+
+if (!slug) return Astro.redirect("/404");
+
+const { entry: post, cacheHint } = await getEmDashEntry("posts", slug);
+
+if (!post) return Astro.redirect("/404");
+
+Astro.cache.set(cacheHint);
+
+const seo = getSeoMeta(post, {
+	siteTitle: "EmDash Shop",
+	siteUrl: Astro.url.origin,
+	path: `/posts/${slug}`,
+});
+
+const tags = await getEntryTerms("posts", post.data.id, "tag");
+const categories = await getEntryTerms("posts", post.data.id, "category");
+---
+
+<Base
+	title={seo.title}
+	description={seo.description}
+	canonical={seo.canonical}
+	image={seo.ogImage}
+	content={{ collection: "posts", id: post.data.id, slug }}
+>
+	<article class="mx-auto max-w-3xl">
+		<!-- Back link -->
+		<a href="/posts" class="mb-8 inline-flex items-center gap-1 text-sm text-gray-400 transition hover:text-gray-600">
+			<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+			Back to blog
+		</a>
+
+		<!-- Meta -->
+		<div class="mb-6 flex flex-wrap items-center gap-3">
+			{categories.length > 0 && (
+				categories.map((c) => (
+					<a href={`/category/${c.slug}`} class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600 transition hover:bg-blue-100">
+						{c.label}
+					</a>
+				))
+			)}
+			{post.data.publishedAt && (
+				<time class="text-sm text-gray-400" datetime={post.data.publishedAt.toISOString()}>
+					{post.data.publishedAt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+				</time>
+			)}
+		</div>
+
+		<!-- Title -->
+		<h1 {...post.edit.title} class="text-4xl font-bold tracking-tight sm:text-5xl">{post.data.title}</h1>
+
+		{post.data.excerpt && (
+			<p class="mt-4 text-lg leading-relaxed text-gray-500">{post.data.excerpt}</p>
+		)}
+
+		<!-- Featured image -->
+		{post.data.featured_image && (
+			<div {...post.edit.featured_image} class="mt-8 overflow-hidden rounded-xl">
+				<Image image={post.data.featured_image} class="w-full" />
+			</div>
+		)}
+
+		<!-- Content -->
+		<div {...post.edit.content} class="prose prose-lg prose-gray mt-10 max-w-none prose-headings:tracking-tight prose-a:text-blue-600 prose-img:rounded-xl">
+			<PortableText value={post.data.content} />
+		</div>
+
+		<!-- Tags -->
+		{tags.length > 0 && (
+			<div class="mt-10 border-t border-gray-200 pt-6">
+				<div class="flex flex-wrap items-center gap-2">
+					<span class="text-sm font-medium text-gray-500">Tagged:</span>
+					{tags.map((t) => (
+						<a href={`/tag/${t.slug}`} class="rounded-full border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 transition hover:border-gray-300 hover:bg-gray-50">
+							{t.label}
+						</a>
+					))}
+				</div>
+			</div>
+		)}
+	</article>
+</Base>

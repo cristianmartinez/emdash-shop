@@ -1,0 +1,289 @@
+{
+	"$schema": "https://emdashcms.com/seed.schema.json",
+	"version": "1",
+	"meta": {
+		"name": "EmDash Shop Demo",
+		"description": "A demo shop built with EmDash and the commerce plugin",
+		"author": "EmDash"
+	},
+
+	"settings": {
+		"title": "EmDash Shop",
+		"tagline": "Commerce for the modern web"
+	},
+
+	"collections": [
+		{
+			"slug": "posts",
+			"label": "Posts",
+			"labelSingular": "Post",
+			"supports": ["drafts", "revisions", "search", "seo"],
+			"fields": [
+				{ "slug": "title", "label": "Title", "type": "string", "required": true, "searchable": true },
+				{ "slug": "featured_image", "label": "Featured Image", "type": "image" },
+				{ "slug": "content", "label": "Content", "type": "portableText", "searchable": true },
+				{ "slug": "excerpt", "label": "Excerpt", "type": "text" }
+			]
+		},
+		{
+			"slug": "pages",
+			"label": "Pages",
+			"labelSingular": "Page",
+			"supports": ["drafts", "revisions", "search"],
+			"fields": [
+				{ "slug": "title", "label": "Title", "type": "string", "required": true, "searchable": true },
+				{ "slug": "content", "label": "Content", "type": "portableText", "searchable": true }
+			]
+		},
+		{
+			"slug": "products",
+			"label": "Products",
+			"labelSingular": "Product",
+			"supports": ["drafts", "revisions", "search", "seo"],
+			"fields": [
+				{ "slug": "title", "label": "Product Name", "type": "string", "required": true, "searchable": true },
+				{ "slug": "description", "label": "Short Description", "type": "text", "searchable": true },
+				{ "slug": "content", "label": "Full Description", "type": "portableText" },
+				{
+					"slug": "product_type",
+					"label": "Product Type",
+					"type": "select",
+					"options": [
+						{ "value": "simple", "label": "Simple" },
+						{ "value": "variable", "label": "Variable" },
+						{ "value": "digital", "label": "Digital" },
+						{ "value": "bundle", "label": "Bundle" }
+					],
+					"defaultValue": "simple"
+				},
+				{ "slug": "featured_image", "label": "Product Image", "type": "image" },
+				{ "slug": "gallery", "label": "Gallery", "type": "json" },
+				{ "slug": "price", "label": "Price (cents)", "type": "integer", "required": true },
+				{ "slug": "compare_at_price", "label": "Compare At Price (cents)", "type": "integer" },
+				{ "slug": "currency", "label": "Currency", "type": "string", "defaultValue": "USD" },
+				{ "slug": "sku", "label": "SKU", "type": "string" },
+				{ "slug": "track_inventory", "label": "Track Inventory", "type": "boolean", "defaultValue": false },
+				{ "slug": "stock_quantity", "label": "Stock Quantity", "type": "integer", "defaultValue": 0 },
+				{ "slug": "weight_grams", "label": "Weight (grams)", "type": "number" },
+				{ "slug": "dimensions", "label": "Dimensions (mm)", "type": "json" },
+				{ "slug": "tax_category", "label": "Tax Category", "type": "string" },
+				{ "slug": "variants", "label": "Variants", "type": "json" },
+				{ "slug": "bundle_items", "label": "Bundle Items", "type": "json" },
+				{ "slug": "digital_asset", "label": "Digital Asset", "type": "json" },
+				{ "slug": "attributes", "label": "Attributes", "type": "json" }
+			]
+		}
+	],
+
+	"taxonomies": [
+		{
+			"name": "category",
+			"label": "Categories",
+			"labelSingular": "Category",
+			"hierarchical": true,
+			"collections": ["posts"],
+			"terms": [
+				{ "slug": "general", "label": "General" },
+				{ "slug": "updates", "label": "Updates" }
+			]
+		},
+		{
+			"name": "tag",
+			"label": "Tags",
+			"labelSingular": "Tag",
+			"hierarchical": false,
+			"collections": ["posts"],
+			"terms": [
+				{ "slug": "starter", "label": "Starter" },
+				{ "slug": "example", "label": "Example" }
+			]
+		},
+		{
+			"name": "product-category",
+			"label": "Product Categories",
+			"labelSingular": "Product Category",
+			"hierarchical": true,
+			"collections": ["products"],
+			"terms": [
+				{ "slug": "clothing", "label": "Clothing" },
+				{ "slug": "accessories", "label": "Accessories" },
+				{ "slug": "digital", "label": "Digital Goods" }
+			]
+		},
+		{
+			"name": "product-tag",
+			"label": "Product Tags",
+			"labelSingular": "Product Tag",
+			"hierarchical": false,
+			"collections": ["products"],
+			"terms": [
+				{ "slug": "new", "label": "New" },
+				{ "slug": "sale", "label": "Sale" },
+				{ "slug": "featured", "label": "Featured" },
+				{ "slug": "bestseller", "label": "Bestseller" }
+			]
+		}
+	],
+
+	"menus": [
+		{
+			"name": "primary",
+			"label": "Primary Navigation",
+			"items": [
+				{ "type": "custom", "label": "Home", "url": "/" },
+				{ "type": "custom", "label": "Shop", "url": "/shop" },
+				{ "type": "custom", "label": "Posts", "url": "/posts" },
+				{ "type": "custom", "label": "About", "url": "/about" }
+			]
+		}
+	],
+
+	"widgetAreas": [
+		{
+			"name": "sidebar",
+			"label": "Sidebar",
+			"description": "Sidebar widget area",
+			"widgets": [
+				{ "type": "component", "componentId": "core:search", "title": "Search" },
+				{ "type": "component", "componentId": "core:categories", "title": "Categories" },
+				{ "type": "component", "componentId": "core:recent-posts", "title": "Recent Posts", "settings": { "count": 5 } }
+			]
+		}
+	],
+
+	"content": {
+		"pages": [
+			{
+				"id": "about",
+				"slug": "about",
+				"status": "published",
+				"data": {
+					"title": "About",
+					"content": [
+						{
+							"_type": "block",
+							"style": "normal",
+							"children": [{ "_type": "span", "text": "Welcome to EmDash Shop — a demo store powered by EmDash CMS and the commerce plugin." }]
+						}
+					]
+				}
+			}
+		],
+		"posts": [
+			{
+				"id": "post-1",
+				"slug": "welcome",
+				"status": "published",
+				"data": {
+					"title": "Welcome to our Shop",
+					"excerpt": "We're open for business! Check out our products.",
+					"content": [
+						{
+							"_type": "block",
+							"style": "normal",
+							"children": [{ "_type": "span", "text": "Our shop is now live. Browse our collection and find something you love." }]
+						}
+					]
+				},
+				"taxonomies": {
+					"category": ["general"],
+					"tag": ["starter"]
+				}
+			}
+		],
+		"products": [
+			{
+				"id": "classic-tee",
+				"slug": "classic-tee",
+				"status": "published",
+				"data": {
+					"title": "Classic Cotton T-Shirt",
+					"description": "A comfortable everyday cotton tee in multiple colors.",
+					"product_type": "variable",
+					"price": 2999,
+					"compare_at_price": 3999,
+					"currency": "USD",
+					"sku": "TEE-001",
+					"track_inventory": true,
+					"stock_quantity": 150,
+					"weight_grams": 200,
+					"variants": [
+						{ "name": "Black / S", "sku": "TEE-001-BK-S", "options": { "color": "Black", "size": "S" }, "price": 2999, "stock": 25 },
+						{ "name": "Black / M", "sku": "TEE-001-BK-M", "options": { "color": "Black", "size": "M" }, "price": 2999, "stock": 30 },
+						{ "name": "Black / L", "sku": "TEE-001-BK-L", "options": { "color": "Black", "size": "L" }, "price": 2999, "stock": 20 },
+						{ "name": "White / S", "sku": "TEE-001-WH-S", "options": { "color": "White", "size": "S" }, "price": 2999, "stock": 25 },
+						{ "name": "White / M", "sku": "TEE-001-WH-M", "options": { "color": "White", "size": "M" }, "price": 2999, "stock": 30 },
+						{ "name": "White / L", "sku": "TEE-001-WH-L", "options": { "color": "White", "size": "L" }, "price": 2999, "stock": 20 }
+					],
+					"attributes": { "material": "100% Cotton", "fit": "Regular" },
+					"content": [
+						{
+							"_type": "block",
+							"style": "normal",
+							"children": [{ "_type": "span", "text": "Our classic cotton t-shirt is made from premium 100% organic cotton. Soft, breathable, and built to last." }]
+						}
+					]
+				},
+				"taxonomies": {
+					"product-category": ["clothing"],
+					"product-tag": ["bestseller", "new"]
+				}
+			},
+			{
+				"id": "leather-wallet",
+				"slug": "leather-wallet",
+				"status": "published",
+				"data": {
+					"title": "Handcrafted Leather Wallet",
+					"description": "A slim, minimalist leather wallet with RFID protection.",
+					"product_type": "simple",
+					"price": 4900,
+					"currency": "USD",
+					"sku": "WAL-001",
+					"track_inventory": true,
+					"stock_quantity": 45,
+					"weight_grams": 80,
+					"attributes": { "material": "Full-grain leather", "slots": "6 card slots + bill compartment" },
+					"content": [
+						{
+							"_type": "block",
+							"style": "normal",
+							"children": [{ "_type": "span", "text": "Handcrafted from full-grain leather, this wallet features RFID-blocking technology and a slim profile that fits comfortably in any pocket." }]
+						}
+					]
+				},
+				"taxonomies": {
+					"product-category": ["accessories"],
+					"product-tag": ["featured"]
+				}
+			},
+			{
+				"id": "design-templates",
+				"slug": "design-templates",
+				"status": "published",
+				"data": {
+					"title": "Design Templates Pack",
+					"description": "50 premium design templates for social media, presentations, and more.",
+					"product_type": "digital",
+					"price": 1999,
+					"currency": "USD",
+					"sku": "DIG-001",
+					"track_inventory": false,
+					"digital_asset": { "filename": "templates-pack-v1.zip", "maxDownloads": 5 },
+					"attributes": { "format": "Figma, Sketch, PSD", "count": "50 templates" },
+					"content": [
+						{
+							"_type": "block",
+							"style": "normal",
+							"children": [{ "_type": "span", "text": "A comprehensive pack of 50 professionally designed templates. Includes social media posts, story templates, presentation slides, and more." }]
+						}
+					]
+				},
+				"taxonomies": {
+					"product-category": ["digital"],
+					"product-tag": ["new", "featured"]
+				}
+			}
+		]
+	}
+}
