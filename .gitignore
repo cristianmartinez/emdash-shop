@@ -6,3 +6,5 @@ data.db
 uploads
 *.local
 .DS_Store
+.envrc
+apps/demo/wrangler.jsonc

@@ -1,0 +1,32 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "emdash-shop",
+	"main": "./src/worker.ts",
+	"compatibility_date": "2026-03-29",
+	"compatibility_flags": ["nodejs_compat"],
+	"assets": {
+		"directory": "./dist"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "emdash-shop"
+			// Create your own: `wrangler d1 create emdash-shop`
+			// Then add: "database_id": "<your-id>"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "MEDIA",
+			"bucket_name": "emdash-shop-media"
+		}
+	],
+	"observability": {
+		"enabled": true
+	},
+	"worker_loaders": [
+		{
+			"binding": "LOADER"
+		}
+	]
+}
