@@ -49,19 +49,19 @@ export async function wishlistGetHandler(ctx: RouteContext<WishlistGetInput>) {
 // ─── Add ─────────────────────────────────────────────────────────
 
 export async function wishlistAddHandler(ctx: RouteContext<WishlistAddInput>) {
-	const { sessionId, productId, variantId } = ctx.input;
+	const { sessionId, productId, variantSku } = ctx.input;
 
 	const { id, wishlist } = await getOrCreateWishlist(ctx, sessionId);
 
 	// Check if already in wishlist
 	const exists = wishlist.items.some(
-		(item) => item.productId === productId && item.variantId === (variantId ?? undefined),
+		(item) => item.productId === productId && item.variantSku === (variantSku ?? undefined),
 	);
 
 	if (!exists) {
 		wishlist.items.push({
 			productId,
-			variantId,
+			variantSku,
 			addedAt: new Date().toISOString(),
 		});
 		wishlist.updatedAt = new Date().toISOString();
@@ -77,12 +77,12 @@ export async function wishlistAddHandler(ctx: RouteContext<WishlistAddInput>) {
 // ─── Remove ──────────────────────────────────────────────────────
 
 export async function wishlistRemoveHandler(ctx: RouteContext<WishlistRemoveInput>) {
-	const { sessionId, productId, variantId } = ctx.input;
+	const { sessionId, productId, variantSku } = ctx.input;
 
 	const { id, wishlist } = await getOrCreateWishlist(ctx, sessionId);
 
 	wishlist.items = wishlist.items.filter(
-		(item) => !(item.productId === productId && item.variantId === (variantId ?? undefined)),
+		(item) => !(item.productId === productId && item.variantSku === (variantSku ?? undefined)),
 	);
 	wishlist.updatedAt = new Date().toISOString();
 	await wishlists(ctx).put(id, wishlist);

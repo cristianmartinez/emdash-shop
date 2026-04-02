@@ -67,7 +67,7 @@ export async function checkoutInitHandler(ctx: RouteContext<CheckoutInitInput>) 
 
 	// Validate stock for all items
 	for (const item of cart.items) {
-		const stock = await checkStock(ctx, item.productId, item.variantId, item.quantity);
+		const stock = await checkStock(ctx, item.productId, item.variantSku, item.quantity);
 		if (!stock.available) {
 			throw PluginRouteError.conflict(`Insufficient stock for product ${item.productId}`);
 		}
@@ -80,6 +80,7 @@ export async function checkoutInitHandler(ctx: RouteContext<CheckoutInitInput>) 
 		postalCode: shippingAddress.postalCode,
 	});
 
+	cart.email = email;
 	cart.shippingAddress = shippingAddress;
 	cart.billingAddress = billingAddress ?? shippingAddress;
 	cart.taxTotal = tax.taxTotal;
@@ -170,13 +171,18 @@ export async function checkoutPlaceOrderHandler(ctx: RouteContext<CheckoutPlaceO
 	if (cart.items.length === 0) {
 		throw PluginRouteError.badRequest("Cart is empty");
 	}
+	if (!cart.email) {
+		throw PluginRouteError.badRequest("Email required. Call checkout/init first.");
+	}
 	if (!cart.shippingAddress || !cart.billingAddress) {
 		throw PluginRouteError.badRequest("Addresses required. Call checkout/init first.");
 	}
 
+	const email = cart.email;
+
 	// Final stock check
 	for (const item of cart.items) {
-		const stock = await checkStock(ctx, item.productId, item.variantId, item.quantity);
+		const stock = await checkStock(ctx, item.productId, item.variantSku, item.quantity);
 		if (!stock.available) {
 			throw PluginRouteError.conflict(`Insufficient stock for product ${item.productId}`);
 		}
@@ -187,7 +193,7 @@ export async function checkoutPlaceOrderHandler(ctx: RouteContext<CheckoutPlaceO
 		ctx,
 		cart.items.map((item) => ({
 			productId: item.productId,
-			variantId: item.variantId,
+			variantSku: item.variantSku,
 			quantity: item.quantity,
 		})),
 	);
@@ -197,11 +203,10 @@ export async function checkoutPlaceOrderHandler(ctx: RouteContext<CheckoutPlaceO
 	const orderId = ulid();
 	const now = new Date().toISOString();
 
-	// Find or create customer
+	// Find or create customer by email
 	let customerId: string;
-	const email = cart.shippingAddress.firstName; // Will be set from checkout/init
 	const existingCustomer = await customers(ctx).query({
-		where: { email: cart.billingAddress.firstName } as never,
+		where: { email } as never,
 		limit: 1,
 	});
 
@@ -210,7 +215,7 @@ export async function checkoutPlaceOrderHandler(ctx: RouteContext<CheckoutPlaceO
 	} else {
 		customerId = ulid();
 		await customers(ctx).put(customerId, {
-			email: "",
+			email,
 			firstName: cart.billingAddress.firstName,
 			lastName: cart.billingAddress.lastName,
 			tags: [],
@@ -230,7 +235,7 @@ export async function checkoutPlaceOrderHandler(ctx: RouteContext<CheckoutPlaceO
 	const order: Order = {
 		orderNumber,
 		customerId,
-		email: "",
+		email,
 		status: "pending",
 		paymentStatus: "pending",
 		fulfillmentStatus: "unfulfilled",
@@ -262,9 +267,9 @@ export async function checkoutPlaceOrderHandler(ctx: RouteContext<CheckoutPlaceO
 		const line: OrderLine = {
 			orderId,
 			productId: item.productId,
-			variantId: item.variantId,
+			variantSku: item.variantSku,
 			productName: item.productId,
-			sku: item.variantId,
+			sku: item.variantSku,
 			quantity: item.quantity,
 			unitPrice: item.unitPrice,
 			lineTotal: item.lineTotal,

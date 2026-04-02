@@ -7,7 +7,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "deploy": "wrangler deploy",
+    "deploy": "astro build && node -e \"const f=require('fs'),d=JSON.parse(f.readFileSync('dist/server/wrangler.json'));d.kv_namespaces?.forEach(k=>{if(k.binding==='SESSION'&&!k.id)k.id=process.env.CLOUDFLARE_KV_SESSION_ID||''});f.writeFileSync('dist/server/wrangler.json',JSON.stringify(d))\" && wrangler deploy --no-experimental-autoconfig",
     "typecheck": "astro check",
     "seed": "emdash seed",
     "bootstrap": "emdash init"

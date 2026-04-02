@@ -8,6 +8,7 @@
 		"seed": "pnpm --filter demo seed",
 		"typecheck": "pnpm -r typecheck",
 		"bootstrap": "pnpm --filter demo bootstrap",
-		"preview": "pnpm --filter demo preview"
+		"preview": "pnpm --filter demo preview",
+		"ship": "cd apps/demo && pnpm run build && pnpm exec wrangler deploy"
 	}
 }

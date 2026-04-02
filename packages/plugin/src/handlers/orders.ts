@@ -137,7 +137,7 @@ export async function ordersCancelHandler(ctx: RouteContext<OrderCancelInput>) {
 		ctx,
 		linesResult.items.map((l) => ({
 			productId: l.data.productId,
-			variantId: l.data.variantId,
+			variantSku: l.data.variantSku,
 			quantity: l.data.quantity,
 		})),
 	);

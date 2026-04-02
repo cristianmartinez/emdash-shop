@@ -43,15 +43,15 @@ export function commercePlugin(
 		],
 		storage: {
 			priceLists: { indexes: ["status", "currency"], uniqueIndexes: ["slug"] },
-			priceEntries: { indexes: ["priceListId", "productId"] },
-			priceRules: { indexes: ["status", "priority", "type"] },
-			discounts: { indexes: ["status", "createdAt"], uniqueIndexes: ["code"] },
+			priceEntries: { indexes: ["priceListId", "productId", ["priceListId", "productId"]] },
+			priceRules: { indexes: ["status", "priority", "type", ["status", "priority"]] },
+			discounts: { indexes: ["status", "createdAt", ["status", "createdAt"]], uniqueIndexes: ["code"] },
 			customers: { indexes: ["createdAt", "orderCount", "totalSpent"], uniqueIndexes: ["email"] },
-			addresses: { indexes: ["customerId"] },
+			addresses: { indexes: ["customerId", ["customerId", "type"]] },
 			carts: { indexes: ["customerId", "expiresAt"], uniqueIndexes: ["sessionId"] },
 			wishlists: { indexes: ["customerId"], uniqueIndexes: ["sessionId"] },
-			orders: { indexes: ["customerId", "status", "paymentStatus", "createdAt"], uniqueIndexes: ["orderNumber"] },
-			orderLines: { indexes: ["orderId", "productId"] },
+			orders: { indexes: ["customerId", "status", "paymentStatus", "createdAt", ["customerId", "createdAt"], ["status", "createdAt"]], uniqueIndexes: ["orderNumber"] },
+			orderLines: { indexes: ["orderId", "productId", ["orderId", "productId"]] },
 		},
 	};
 }

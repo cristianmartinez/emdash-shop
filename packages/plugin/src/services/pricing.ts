@@ -7,7 +7,7 @@
 
 import type { RouteContext, StorageCollection } from "emdash";
 
-import type { PriceEntry, PriceList, PriceRule, Product, ProductVariant } from "../types.js";
+import type { PriceEntry, PriceList, PriceRule, ProductData, ProductVariantData } from "../types.js";
 
 export interface ResolvedPrice {
 	/** Final unit price in cents */
@@ -27,15 +27,15 @@ export interface ResolvedPrice {
  */
 export async function resolvePrice(
 	ctx: RouteContext,
-	product: Product,
-	variant?: ProductVariant,
+	product: ProductData,
+	variant?: ProductVariantData,
 	quantity: number = 1,
 	_customerTags: string[] = [],
 ): Promise<ResolvedPrice> {
 	// Step 1: Base price (variant overrides product)
 	let unitPrice = variant?.price ?? product.price;
-	const compareAtPrice = variant?.compareAtPrice ?? product.compareAtPrice;
-	const currency = variant?.currency ?? product.currency;
+	const compareAtPrice = product.compare_at_price;
+	const currency = product.currency ?? "USD";
 	const originalPrice = unitPrice;
 
 	// Step 2: Check active price lists
@@ -95,13 +95,11 @@ export async function resolvePrice(
 
 		// Check scope
 		if (rule.data.scope === "products" && rule.data.scopeIds) {
-			const productId = variant?.productId ?? product.slug;
+			const productId = product.id ?? product.slug ?? "";
 			if (!rule.data.scopeIds.includes(productId)) continue;
 		}
-		if (rule.data.scope === "categories" && rule.data.scopeIds) {
-			const inCategory = product.categoryIds.some((id) => rule.data.scopeIds!.includes(id));
-			if (!inCategory) continue;
-		}
+		// Category scope matching requires taxonomy data which isn't available here
+		// TODO: pass category slugs into resolvePrice for category-scoped rules
 
 		let discount = 0;
 

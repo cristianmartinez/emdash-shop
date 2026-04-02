@@ -1,12 +1,13 @@
 /**
  * Inventory management service.
  *
- * Handles stock checking, reservation, and release.
+ * Products are emdash content collections. Stock checking reads from content,
+ * but stock updates require write:content capability.
  */
 
-import type { RouteContext, StorageCollection } from "emdash";
+import type { RouteContext } from "emdash";
 
-import type { Product, ProductVariant } from "../types.js";
+import type { ProductData } from "../types.js";
 
 export interface StockCheckResult {
 	available: boolean;
@@ -15,73 +16,79 @@ export interface StockCheckResult {
 }
 
 /**
+ * Get product data from the content collection.
+ */
+async function getProduct(ctx: RouteContext, productId: string): Promise<ProductData | null> {
+	if (!ctx.content) return null;
+	const item = await ctx.content.get("products", productId);
+	return item ? (item.data as unknown as ProductData) : null;
+}
+
+/**
  * Check if a product/variant has sufficient stock.
  */
 export async function checkStock(
 	ctx: RouteContext,
 	productId: string,
-	variantId: string | undefined,
+	variantSku: string | undefined,
 	requestedQuantity: number,
 ): Promise<StockCheckResult> {
-	if (variantId) {
-		const variants = ctx.storage.variants as StorageCollection<ProductVariant>;
-		const variant = await variants.get(variantId);
-		if (!variant) return { available: false, quantity: 0, trackInventory: true };
-
-		if (!variant.trackInventory) {
-			return { available: true, quantity: Infinity, trackInventory: false };
-		}
-
-		return {
-			available: (variant.stockQuantity ?? 0) >= requestedQuantity,
-			quantity: variant.stockQuantity ?? 0,
-			trackInventory: true,
-		};
-	}
-
-	const products = ctx.storage.products as StorageCollection<Product>;
-	const product = await products.get(productId);
+	const product = await getProduct(ctx, productId);
 	if (!product) return { available: false, quantity: 0, trackInventory: true };
 
-	if (!product.trackInventory) {
+	if (!product.track_inventory) {
 		return { available: true, quantity: Infinity, trackInventory: false };
 	}
 
+	// Check variant-specific stock if applicable
+	if (variantSku && product.variants) {
+		const variant = product.variants.find((v) => v.sku === variantSku);
+		if (variant && variant.stock !== undefined) {
+			return {
+				available: variant.stock >= requestedQuantity,
+				quantity: variant.stock,
+				trackInventory: true,
+			};
+		}
+	}
+
 	return {
-		available: (product.stockQuantity ?? 0) >= requestedQuantity,
-		quantity: product.stockQuantity ?? 0,
+		available: (product.stock_quantity ?? 0) >= requestedQuantity,
+		quantity: product.stock_quantity ?? 0,
 		trackInventory: true,
 	};
 }
 
 /**
  * Reserve stock for an order (decrement quantities).
+ *
+ * Updates the product content via ctx.content.update().
  */
 export async function reserveStock(
 	ctx: RouteContext,
-	items: Array<{ productId: string; variantId?: string; quantity: number }>,
+	items: Array<{ productId: string; variantSku?: string; quantity: number }>,
 ): Promise<void> {
+	if (!ctx.content?.update) return;
+
 	for (const item of items) {
-		if (item.variantId) {
-			const variants = ctx.storage.variants as StorageCollection<ProductVariant>;
-			const variant = await variants.get(item.variantId);
-			if (variant?.trackInventory) {
-				await variants.put(item.variantId, {
-					...variant,
-					stockQuantity: Math.max(0, (variant.stockQuantity ?? 0) - item.quantity),
-					updatedAt: new Date().toISOString(),
-				});
-			}
+		const product = await getProduct(ctx, item.productId);
+		if (!product?.track_inventory) continue;
+
+		if (item.variantSku && product.variants) {
+			// Update variant stock within the variants JSON
+			const updatedVariants = product.variants.map((v) =>
+				v.sku === item.variantSku
+					? { ...v, stock: Math.max(0, (v.stock ?? 0) - item.quantity) }
+					: v,
+			);
+			await ctx.content.update("products", item.productId, {
+				variants: updatedVariants,
+				stock_quantity: Math.max(0, (product.stock_quantity ?? 0) - item.quantity),
+			});
 		} else {
-			const products = ctx.storage.products as StorageCollection<Product>;
-			const product = await products.get(item.productId);
-			if (product?.trackInventory) {
-				await products.put(item.productId, {
-					...product,
-					stockQuantity: Math.max(0, (product.stockQuantity ?? 0) - item.quantity),
-					updatedAt: new Date().toISOString(),
-				});
-			}
+			await ctx.content.update("products", item.productId, {
+				stock_quantity: Math.max(0, (product.stock_quantity ?? 0) - item.quantity),
+			});
 		}
 	}
 }
@@ -91,29 +98,28 @@ export async function reserveStock(
  */
 export async function releaseStock(
 	ctx: RouteContext,
-	items: Array<{ productId: string; variantId?: string; quantity: number }>,
+	items: Array<{ productId: string; variantSku?: string; quantity: number }>,
 ): Promise<void> {
+	if (!ctx.content?.update) return;
+
 	for (const item of items) {
-		if (item.variantId) {
-			const variants = ctx.storage.variants as StorageCollection<ProductVariant>;
-			const variant = await variants.get(item.variantId);
-			if (variant?.trackInventory) {
-				await variants.put(item.variantId, {
-					...variant,
-					stockQuantity: (variant.stockQuantity ?? 0) + item.quantity,
-					updatedAt: new Date().toISOString(),
-				});
-			}
+		const product = await getProduct(ctx, item.productId);
+		if (!product?.track_inventory) continue;
+
+		if (item.variantSku && product.variants) {
+			const updatedVariants = product.variants.map((v) =>
+				v.sku === item.variantSku
+					? { ...v, stock: (v.stock ?? 0) + item.quantity }
+					: v,
+			);
+			await ctx.content.update("products", item.productId, {
+				variants: updatedVariants,
+				stock_quantity: (product.stock_quantity ?? 0) + item.quantity,
+			});
 		} else {
-			const products = ctx.storage.products as StorageCollection<Product>;
-			const product = await products.get(item.productId);
-			if (product?.trackInventory) {
-				await products.put(item.productId, {
-					...product,
-					stockQuantity: (product.stockQuantity ?? 0) + item.quantity,
-					updatedAt: new Date().toISOString(),
-				});
-			}
+			await ctx.content.update("products", item.productId, {
+				stock_quantity: (product.stock_quantity ?? 0) + item.quantity,
+			});
 		}
 	}
 }

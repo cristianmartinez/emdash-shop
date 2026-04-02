@@ -182,6 +182,7 @@ export interface CustomerAddress {
 export interface Cart {
 	sessionId: string;
 	customerId?: string;
+	email?: string;
 	items: CartItem[];
 	discountCodes: string[];
 	currency: string;
